@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Práctica 3 - Turbo Match</title>
+<style>
+  @page { size: Letter; margin: 118px 60px 96px 60px; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Calibri, Carlito, "Helvetica Neue", Arial, sans-serif; font-size: 12pt; line-height: 1.32; color: #000; margin: 0; }
+  .letterhead { position: fixed; top: -118px; left: -60px; width: 816px; height: 1056px; z-index: -1; }
+  .letterhead img { width: 816px; height: 1056px; display: block; }
+  .doc-title { position: fixed; top: -66px; left: 236px; font-size: 18pt; font-weight: 700; color: #101d61; white-space: nowrap; }
+  .meta { display: grid; grid-template-columns: 150px 1fr; row-gap: 2px; margin: 6px 0 12px 12px; font-size: 11.5pt; }
+  h1 { font-size: 16pt; color: #1f3864; margin: 10px 0 8px; }
+  h2 { font-size: 14pt; color: #d21034; margin: 18px 0 6px; padding-top: 6px; border-top: 1.5px dotted #888; break-after: avoid; }
+  h3 { font-size: 12pt; margin: 10px 0 2px; break-after: avoid; }
+  p { margin: 0 0 8px 12px; }
+  ul, ol { margin: 0 0 8px 12px; padding-left: 22px; }
+  li { margin-bottom: 3px; }
+  table { border-collapse: collapse; width: calc(100% - 12px); margin: 4px 0 4px 12px; font-size: 9.5pt; break-inside: avoid; }
+  th { background: #000; color: #fff; font-weight: 400; padding: 4px 6px; text-align: center; }
+  td { border: 0.75px solid #777; padding: 4px 6px; vertical-align: middle; }
+  td.c { text-align: center; }
+  .cap { font-size: 9pt; font-style: italic; text-align: center; margin: 4px 24px 10px; }
+  figure { margin: 6px 0 0; text-align: center; break-inside: avoid; }
+  figure img { max-width: 100%; }
+  .shots { display: flex; gap: 10px; justify-content: center; align-items: flex-start; }
+  .shots img { height: 330px; width: auto; border: 1px solid #bbb; border-radius: 6px; }
+  code, pre { font-family: Consolas, Menlo, monospace; font-size: 9.5pt; }
+  pre { background: #f3f3f3; border: 1px solid #ddd; padding: 6px 8px; margin: 4px 0 8px 12px; white-space: pre-wrap; break-inside: avoid; }
+  .todo { background: #fff2a8; padding: 0 3px; }
+  .ref { margin-left: 12px; padding-left: 28px; text-indent: -28px; margin-bottom: 6px; }
+  .nb { break-inside: avoid; }
+</style>
+</head>
+<body>
+<div class="meta">
+  <div>Asignatura:</div><div>APLICACIONES MÓVILES</div>
+  <div>Docente:</div><div>Felipe Mandujano Gómez</div>
+  <div>Alumnos:</div><div>David Alejandro Elizarraraz García 220437<br>Diego Sastre Villaseñor 221320</div>
+  <div>Fecha de entrega:</div><div>12 de octubre de 2026</div>
+  <div>Repositorio:</div><div>https://github.com/DavidAElizarrarazG/turbo-match</div>
+</div>
+
+<h1>PRÁCTICA NÚMERO 3: Minijuego interactivo con React Native y Expo</h1>
+
+<h2>Objetivo</h2>
+<p>Aplicar los conceptos de programación avanzada con React Native y Expo para desarrollar una aplicación móvil interactiva de entretenimiento. De manera específica, a partir de la aplicación de las lecciones 15 y 16 y del repositorio base del docente, se desarrolla <b>Turbo Match</b>, un juego de tipo Match-3 con cuatro pantallas (presentación, juego, juego terminado y créditos) que usa Expo Router para la navegación, estados con hooks, gestos táctiles, animaciones y una identidad visual consistente, y que se demuestra en un dispositivo físico mediante Expo Go.</p>
+
+<h2>Introducción y Consideraciones Teóricas</h2>
+<p><b>React Native y Expo.</b> React Native permite construir interfaces móviles nativas con JavaScript/TypeScript y React: los componentes (<code>View</code>, <code>Text</code>, <code>Image</code>, <code>Pressable</code>) se traducen a vistas nativas de Android o iOS, no a una página web embebida. Expo es el conjunto de herramientas sobre React Native que simplifica el desarrollo: su CLI levanta el servidor de desarrollo (Metro), empaqueta el código y lo entrega a <i>Expo Go</i>, una aplicación contenedora que permite probar el proyecto en un dispositivo real sin compilar código nativo, con recarga rápida (<i>Fast Refresh</i>) al guardar los cambios.</p>
+<p><b>Navegación con Expo Router.</b> Expo Router define las rutas a partir de la estructura de archivos: cada archivo de <code>src/app/</code> es una pantalla y <code>_layout.tsx</code> declara el navegador (aquí un <code>Stack</code>). La navegación imperativa se hace con <code>router.push</code>, que apila una pantalla, y <code>router.replace</code>, que sustituye la actual y evita que el botón «Atrás» regrese a una pantalla que ya no corresponde; los parámetros viajan en la ruta y se leen con <code>useLocalSearchParams</code>.</p>
+<p><b>Estado y ciclo de vida.</b> El modelo de React es declarativo: la interfaz es una función del estado. <code>useState</code> conserva valores que al cambiar deben redibujar la pantalla (tiempo, puntos), <code>useEffect</code> ejecuta efectos secundarios al montar o al cambiar una dependencia y los limpia al desmontar (el temporizador), y <code>useRef</code> guarda valores mutables que no provocan redibujado (el tablero, banderas de «ocupado»). Cuando se requiere controlar un componente de forma imperativa se usan referencias, como en la lección del tablero con celdas.</p>
+<p><b>Gestos y animación.</b> <code>PanResponder</code> agrupa los toques en un gesto con tres momentos: concesión (<code>onPanResponderGrant</code>), movimiento (<code>onPanResponderMove</code>, con el desplazamiento acumulado <code>dx</code>, <code>dy</code>) y liberación (<code>onPanResponderRelease</code>). La API <code>Animated</code> interpola valores (<code>Animated.Value</code>) con <code>timing</code> o <code>spring</code>; con <code>useNativeDriver: true</code> las transformaciones (<code>translateX</code>, <code>scale</code>) y la opacidad se ejecutan en el hilo nativo, lo que mantiene la fluidez aunque el hilo de JavaScript esté ocupado.</p>
+<p><b>Mecánica Match-3 y 2048.</b> En los videojuegos de combinación de fichas (<i>tile-matching</i>) el jugador manipula piezas sobre una cuadrícula para formar alineaciones de piezas iguales, que desaparecen y otorgan puntos; las piezas superiores caen (gravedad), entran piezas nuevas y pueden generarse reacciones en cadena (<i>combos</i>). En Match-3 se intercambian dos piezas adyacentes y el intercambio solo es válido si forma una línea de tres o más; en 2048 se funden fichas iguales para obtener una de mayor valor. Ambos comparten la idea de «igualdad contigua» y de valor creciente de las piezas.</p>
+<p><b>Modelo de objetos de juego y Entity Component System (ECS).</b> Los motores de videojuegos suelen organizar el mundo en objetos de juego (<i>game objects</i>) a los que se agregan componentes (posición, imagen, física, comportamiento) y ejecutan un ciclo de juego que actualiza todo en cada cuadro. El patrón <i>Entity Component System</i> separa aún más: las entidades son solo identificadores, los componentes son datos puros y los sistemas son funciones que procesan todas las entidades que poseen ciertos componentes, lo que favorece el rendimiento y la reutilización (Nystrom, 2014).</p>
+<p><b>Usabilidad.</b> Se aplicaron heurísticas de Nielsen: visibilidad del estado del sistema (H1: tiempo, puntos y avisos de «+puntos» o «combo»), control y libertad del usuario (H3: confirmación antes de terminar la partida), prevención de errores (H5: el intercambio inválido no se ejecuta, regresa a su lugar) y ayudar a reconocer y recuperarse de errores (H9: mensaje en lenguaje claro). La semiótica orienta el diseño de los gráficos: un signo funciona si su forma evoca el concepto, por ejemplo una silueta cada vez más deportiva para indicar mayor potencia.</p>
+
+<h2>Material y Equipo</h2>
+<table>
+  <tr><th style="width:80px">CANTIDAD</th><th>MATERIAL Y EQUIPO</th></tr>
+  <tr><td class="c">1</td><td>Computadora personal con macOS y Node.js 22.18 / npm 10.9</td></tr>
+  <tr><td class="c">1</td><td>Expo SDK 57 (expo 57.0.26), React Native 0.86.3, React 19.2.3, Expo Router 57.0.24 y TypeScript 6.0</td></tr>
+  <tr><td class="c">1</td><td>Dispositivo físico Google Pixel 10 (Android) con Expo Go para SDK 57, conectado por USB con depuración habilitada</td></tr>
+  <tr><td class="c">1</td><td>Android SDK Platform-Tools (adb 37.0.1) para autorizar el dispositivo, instalar Expo Go y capturar la pantalla</td></tr>
+  <tr><td class="c">1</td><td>Python 3 con la biblioteca Pillow para dibujar los gráficos de los autos y los íconos</td></tr>
+  <tr><td class="c">1</td><td>Google Chrome (modo sin interfaz) para generar las capturas de la vista web y este reporte en PDF</td></tr>
+  <tr><td class="c">1</td><td>Asistente de programación con IA (Claude Code) como apoyo para escribir código, gráficos y documentación</td></tr>
+</table>
+
+<h2>Desarrollo Experimental</h2>
+<p><b>1. Base del proyecto.</b> Se partió del repositorio proporcionado (<i>test-2026-2</i>), una plantilla de Expo SDK 57 con Expo Router y un tablero de 4×4 con arrastre mediante <code>PanResponder</code>, cuya detección de coincidencias estaba pendiente (<code>checkCell</code>). Se conservaron las versiones del repositorio, se instalaron las 607 dependencias con <code>npm install</code> y se desactivó el compilador de React (<code>reactCompiler</code> en <code>app.json</code>) porque el juego muta referencias durante el renderizado, patrón que ese compilador no optimiza.</p>
+<p><b>2. Organización por capas.</b> En lugar de concentrar todo en pantallas, el código se separó así: <code>src/app</code> (rutas: <code>index</code>, <code>game</code>, <code>gameover</code>, <code>credits</code> y el <code>_layout</code> con el <code>Stack</code>), <code>src/game</code> (<code>engine.ts</code> con la lógica pura, <code>cars.ts</code> con los gráficos y <code>scoreStore.ts</code> con el mejor puntaje), <code>src/components</code> (<code>AppButton</code>, <code>CheckeredStrip</code>) y los archivos <code>theme.ts</code> y <code>styles.ts</code> con la paleta y los estilos reutilizables.</p>
+<p><b>3. Identidad visual.</b> Para entretener de forma sana, divertida y corporativa se eligió una temática de autos y carreras con una paleta sobria: asfalto oscuro (<code>#0D0E13</code>, <code>#171A22</code>, <code>#1F2330</code>) como fondo y superficies, ámbar de faros (<code>#FFC21A</code>) como único color de acción, verde (<code>#35D07F</code>) para aciertos y naranja (<code>#FF5A36</code>) para avisos. Esos valores viven en un solo archivo (<code>theme.ts</code>) y los estilos de títulos, tarjetas, botones e indicadores (<code>styles.ts</code>) y el componente <code>AppButton</code> se reutilizan en las cuatro pantallas; la franja de bandera a cuadros (<code>CheckeredStrip</code>) es el motivo decorativo común. Se dibujó además el ícono de la aplicación y de la pantalla de bienvenida con el auto de mayor potencia.</p>
+
+<div class="nb">
+<p><b>4. Recursos gráficos de las celdas.</b> Cada celda muestra un auto; el tipo de auto indica la característica común que debe coincidir y la potencia indica su «poder». Los cinco gráficos (PNG de 256 px) se dibujaron por programa con Pillow para no depender de material de terceros. La figura 1 muestra los recursos y la tabla 1 resume su justificación.</p>
+<figure><img src="img/cars_sheet.png" style="width:78%"><div class="cap">Figura 1. Recursos gráficos utilizados para las celdas: de izquierda a derecha, Compacto, Sedán, SUV, Deportivo y Hípercar.</div></figure>
+<table>
+  <tr><th>AUTO</th><th>GRÁFICO</th><th>PUNTOS</th><th>JUSTIFICACIÓN</th></tr>
+  <tr><td>Compacto</td><td class="c"><img src="img/cars/compacto.png" width="34"></td><td class="c">10</td><td>Silueta de hatchback redondeada y azul pizarra; es el vehículo más común y de menor valor. Un punto de potencia.</td></tr>
+  <tr><td>Sedán</td><td class="c"><img src="img/cars/sedan.png" width="34"></td><td class="c">20</td><td>Silueta de tres volúmenes, más larga; verde. Dos puntos de potencia.</td></tr>
+  <tr><td>SUV</td><td class="c"><img src="img/cars/suv.png" width="34"></td><td class="c">35</td><td>Carrocería alta y rectangular con barras de techo y ruedas grandes; naranja. Tres puntos de potencia.</td></tr>
+  <tr><td>Deportivo</td><td class="c"><img src="img/cars/deportivo.png" width="34"></td><td class="c">60</td><td>Perfil bajo en cuña con alerón; rojo, color asociado a velocidad. Cuatro puntos de potencia.</td></tr>
+  <tr><td>Hípercar</td><td class="c"><img src="img/cars/hipercar.png" width="34"></td><td class="c">100</td><td>Monoplaza con alerones y llantas expuestas; morado, el color más «raro». Cinco puntos de potencia.</td></tr>
+</table>
+<div class="cap">Tabla 1. Gráficos de las celdas, valor en puntos y justificación.</div>
+</div>
+<p>La elección sigue tres criterios. <i>Semiótico</i>: la silueta se vuelve más baja y aerodinámica al subir de nivel, de modo que el orden compacto &lt; sedán &lt; SUV &lt; deportivo &lt; hípercar se entiende sin leer texto. <i>Accesibilidad</i>: cada auto se distingue por tres señales redundantes (silueta, color de fondo y número de puntos de potencia), así que un jugador con daltonismo no depende solo del color. <i>Legibilidad</i>: las siluetas blancas sobre fondo de color saturado conservan contraste en celdas de aproximadamente 52 px.</p>
+
+<p><b>5. Motor del juego.</b> La lógica se escribió como funciones puras en <code>engine.ts</code>, sin depender de React, sobre un tablero de 7×7 con 5 tipos. <code>createBoard</code> llena la cuadrícula evitando líneas ya formadas y verifica que exista al menos un movimiento; <code>findRuns</code> busca líneas de 3 o más en filas y columnas; <code>collapse</code> aplica la gravedad y genera las piezas nuevas desde fuera del tablero; <code>hasMoves</code> comprueba que aún haya jugadas y <code>shuffleBoard</code> mezcla el tablero cuando no quedan. La puntuación de una línea es <code>puntos × longitud × (longitud − 2)</code> (3 piezas ×1, 4 piezas ×2, 5 piezas ×3) y se multiplica por el número de cascada (<i>combo</i>); así la puntuación aumenta con cada acción correcta y premia tanto las líneas largas como los autos de mayor potencia.</p>
+<p><b>6. Pantalla de juego.</b> Cada auto es un <code>Animated.View</code> con valores animados de posición, escala y opacidad, que se crean una vez y se manipulan de forma imperativa. El tablero recibe los toques con un <code>PanResponder</code>: al iniciar el gesto se calcula la celda con <code>locationX/Y</code> (por eso las vistas internas usan <code>pointerEvents: "none"</code>), y si el desplazamiento supera el 30 % del tamaño de la celda se toma la dirección dominante y se intercambia con la vecina; también se admite tocar dos autos contiguos. El flujo de un intercambio se escribió con <code>async/await</code> sobre las animaciones: intercambiar (150 ms), buscar líneas, desvanecer, aplicar gravedad (230 ms) y repetir mientras haya cascadas. Una bandera <code>busy</code> ignora los toques durante la secuencia. Si el intercambio no forma línea, los autos regresan y aparece el aviso «Ese intercambio no forma una línea» (H5, H9). El temporizador de 90 s con barra de progreso y los avisos «+puntos» y «¡Combo x2!» dan visibilidad del estado (H1), y «Terminar juego» pide confirmación (H3).</p>
+<p><b>7. Pantallas restantes.</b> La pantalla de presentación (figura 2) muestra el nombre, una descripción breve del propósito, las instrucciones, la tabla de autos y potencia y los botones «¡A correr!» y «Créditos». Al terminar el tiempo o confirmar la salida se navega con <code>router.replace</code> a la pantalla de juego terminado (figura 4), que recibe la puntuación y el mejor puntaje por parámetros y ofrece «Jugar de nuevo», «Inicio» y «Créditos». La pantalla de créditos (figura 5) presenta al equipo, el curso y la tecnología usada.</p>
+
+<div class="nb">
+<figure>
+  <div class="shots"><img src="img/web_index.png"><img src="img/dev_game.png"></div>
+  <div class="cap">Figura 2 (izquierda). Pantalla de presentación. Figura 3 (derecha). Pantalla de juego en el Google Pixel 10 con Expo Go, con tiempo, puntuación, barra de progreso y tablero 7×7.</div>
+</figure>
+</div>
+<div class="nb">
+<figure>
+  <div class="shots"><img src="img/web_gameover.png"><img src="img/web_credits.png"></div>
+  <div class="cap">Figura 4 (izquierda). Pantalla de juego terminado con puntuación y récord. Figura 5 (derecha). Pantalla de créditos. Las figuras 2, 4 y 5 son capturas de la vista web de la misma aplicación (react-native-web); la figura 3 es una captura del dispositivo físico.</div>
+</figure>
+</div>
+
+<p><b>8. Pruebas del motor.</b> Se escribieron 7 pruebas automatizadas con <code>node:test</code> (<code>npm test</code>) que verifican: 200 tableros generados sin líneas y con movimientos disponibles, detección de líneas horizontales de 3 y verticales de 4, que dos piezas iguales no cuentan, el cálculo de puntos, que la gravedad no deja huecos y que la mezcla conserva las piezas y deja un tablero jugable. Las 7 pruebas pasan y <code>tsc --noEmit</code> no reporta errores de tipos.</p>
+<p><b>9. Ejecución en el dispositivo físico.</b> Con el Pixel 10 conectado por USB se confirmó con <code>adb devices</code> que apareciera como <code>device</code> (tras aceptar en el teléfono el aviso de depuración USB), y se ejecutó <code>npx expo start --android</code>. La herramienta de Expo descargó e instaló Expo Go en el teléfono, configuró el reenvío del puerto 8081 (<code>adb reverse</code>) y abrió la aplicación, que compiló el paquete JavaScript (1,416 módulos) en pocos segundos. Para que la pantalla no se apague durante la demostración se usó <code>adb shell svc power stayon usb</code>.</p>
+<pre>adb devices -l
+npx expo start --android --port 8081
+adb shell svc power stayon usb</pre>
+
+<h2>Análisis de Resultados</h2>
+<p>La aplicación cumple los requisitos de la asignación: está hecha con React Native, Expo y Expo Router; tiene pantallas de presentación (nombre, descripción e instrucciones), juego, juego terminado y créditos; el juego es de tipo Match-3 con eliminación de celdas iguales contiguas, caída y combos; cada celda usa un gráfico que indica su tipo y su nivel de poder; los estilos (<code>theme.ts</code>, <code>styles.ts</code>, componentes) son reutilizables y dan una identidad uniforme; la puntuación sube con cada línea formada; y funciona en un dispositivo físico mediante Expo Go. En las pruebas con el dispositivo se jugaron partidas completas y se observaron los avisos de puntos y de combo (por ejemplo «+210 ¡Combo x2!») y la devolución del intercambio inválido.</p>
+<p>El factor que más contribuyó fue separar la lógica del juego de la interfaz: al estar el motor en funciones puras fue posible probarlo sin dispositivo y, cuando el equipo decidió cambiar la temática de minerales a autos para dar originalidad, solo se modificaron los gráficos, la paleta y los textos; el motor no cambió y las 7 pruebas siguieron pasando. La contrapartida es que React es declarativo y un juego necesita sincronizar animaciones asíncronas con un estado lógico que cambia rápido, por lo que se recurrió a referencias, valores animados mutables y una bandera de «ocupado».</p>
+<p>Problemas encontrados y soluciones:</p>
+<ul>
+  <li><b>Dispositivo «unauthorized».</b> <code>adb devices</code> mostraba el Pixel 10 como no autorizado y Expo respondía que el equipo no estaba autorizado. Se resolvió aceptando en el teléfono el aviso «¿Permitir depuración USB?»; como la autorización se pidió de nuevo al reiniciar el servidor de <code>adb</code>, se reinició un solo servidor y se esperó a que el estado cambiara a <code>device</code> antes de lanzar Expo.</li>
+  <li><b>Expo Go no instalado.</b> El teléfono no tenía Expo Go; el comando <code>expo start --android</code> lo descargó e instaló automáticamente en la versión que corresponde al SDK 57.</li>
+  <li><b>Capturas negras.</b> Al capturar con <code>adb screencap</code> la imagen salió completamente negra porque el teléfono tenía abiertas las Opciones de desarrollador y la pantalla se apaga por inactividad. Se mantuvo la pantalla encendida con <code>svc power stayon usb</code> y se volvió a abrir la aplicación.</li>
+  <li><b>Fuga de valores animados.</b> En una revisión del código se detectó que se vaciaba la lista de piezas desvanecidas antes de recorrerla para liberar sus valores animados, por lo que nunca se liberaban; se invirtió el orden (primero liberar, luego vaciar).</li>
+  <li><b>Pruebas.</b> Una prueba falló porque el tablero de ejemplo ya contenía una pieza del mismo tipo en la fila 0 y la línea medía 5 en lugar de 4 (error de la prueba, no del motor); se cambió el tipo usado. Además, Node exige importar los tipos con <code>type</code> y usar la extensión <code>.ts</code>, y <code>tsc</code> se configuró para excluir la carpeta de pruebas.</li>
+  <li><b>Coordenadas del toque.</b> <code>locationX/Y</code> es relativo a la vista que recibe el toque; si una celda lo recibiera, la posición sería local a ella. Se resolvió como en la lección: las vistas internas del tablero ignoran los toques (<code>pointerEvents: "none"</code>) y el tablero calcula la celda.</li>
+  <li><b>Vista previa para las capturas.</b> Chrome sin interfaz impone un ancho mínimo de ventana y recortaba las pantallas; se amplió a 500 px de ancho. Por eso las figuras 2, 4 y 5 provienen de la vista web y se indica así en el pie de figura.</li>
+</ul>
+<p><b>Limitaciones y mejoras a futuro.</b> El mejor puntaje solo vive en memoria; podría persistirse con <code>AsyncStorage</code>. Faltan sonido, vibración háptica, dificultad progresiva y un modo de pistas. Como mejora principal se propone un tablero de puntuaciones en línea. La siguiente propuesta es conceptual y busca que sea seguro y razonablemente robusto ante ataques de suplantación (<i>spoofing</i>), tanto de usuario como de cliente:</p>
+<ol>
+  <li><b>Inicio de partida firmado por el servidor.</b> La app llama a <code>POST /api/partidas</code> con el token de sesión del usuario (inicio de sesión sobre HTTPS, como en la práctica 2). El servidor responde con un <code>idPartida</code> único, una <i>semilla</i> aleatoria para generar el tablero, la hora de inicio y una firma HMAC-SHA256 de esos datos con una clave que solo conoce el servidor (Krawczyk et al., 1997).</li>
+  <li><b>Juego determinista.</b> Con esa semilla, un generador pseudoaleatorio produce el mismo tablero y las mismas piezas nuevas; así la partida queda completamente determinada por la secuencia de movimientos del jugador.</li>
+  <li><b>Envío del registro, no del puntaje.</b> Al terminar, la app envía <code>POST /api/partidas/{id}/fin</code> con la lista de movimientos (celda origen, destino y marca de tiempo). El servidor no confía en el puntaje enviado: <i>reproduce</i> la partida ejecutando el mismo <code>engine.ts</code> (es lógica pura y corre en Node) y calcula el puntaje real.</li>
+  <li><b>Validaciones.</b> Se rechaza la partida si la firma no coincide, si el <code>idPartida</code> ya se usó (anti-reproducción o <i>replay</i>), si excede los 90 s más una tolerancia, si hay movimientos físicamente imposibles (por ejemplo menos de 150 ms entre intercambios) o si algún movimiento es inválido.</li>
+  <li><b>Identidad del usuario y del cliente.</b> Tokens de vida corta ligados al usuario, TLS con verificación del certificado y, en Android, atestación de la aplicación y del dispositivo con la API Play Integrity para dificultar clientes modificados o emuladores. Ningún secreto se guarda en la app, porque el APK puede extraerse (limitación ya observada en la práctica 2).</li>
+  <li><b>Defensa en el servidor.</b> Límite de solicitudes por usuario y por IP, validación estricta del esquema JSON, consultas parametrizadas y revisión de valores atípicos antes de publicar en el tablero (OWASP, 2023).</li>
+</ol>
+<p>Con este esquema, un atacante que suplante al usuario necesita su token; uno que falsifique el cliente no puede inventar un puntaje porque el servidor lo recalcula; y uno que repita una partida válida es detenido por el identificador de un solo uso.</p>
+
+<h2>Conclusiones</h2>
+<p><b>Conclusión grupal.</b> Esta práctica integró en una sola aplicación lo visto en las lecciones 15 y 16: navegación con Expo Router, estados y ciclo de vida con hooks, gestos con <code>PanResponder</code> y animaciones con <code>Animated</code>. <b>Ventajas</b> de React Native y Expo: un solo código en TypeScript, rutas por archivos que dejan la navegación casi declarativa, recarga rápida y Expo Go para probar en un teléfono real en minutos, y animaciones fluidas gracias al <i>native driver</i>. <b>Dificultades</b>: el modelo declarativo no encaja de forma natural con un juego, donde muchas piezas cambian de estado varias veces por segundo; fue necesario usar referencias y valores animados mutables, coordinar promesas con la lógica y manejar a bajo nivel los gestos y las coordenadas del toque. Tampoco existe un ciclo de juego propio (<i>update</i> por cuadro): todo avanza por eventos y animaciones.</p>
+<p>En contraste, un motor de videojuegos con modelo de objetos de juego o ECS ofrece un ciclo de actualización por cuadro, escenas, colisiones, física y animadores integrados, y organiza el mundo en entidades, componentes y sistemas. Nuestro <code>engine.ts</code> se parece a esa separación: los datos (<code>Grid</code>, <code>Tile</code>) están aparte de funciones puras que actúan como «sistemas» (<code>findRuns</code>, <code>collapse</code>, <code>runScore</code>), y React hace de capa de presentación. Para un juego de tablero con pocas piezas esto funciona bien y se beneficia de la navegación, los formularios y la distribución móvil de React Native; para juegos con cientos de objetos, física o efectos continuos, un motor basado en objetos de juego o ECS escala mejor.</p>
+<p><b>Conclusión individual de David Alejandro Elizarraraz García.</b> Esta práctica me mostró que en un juego la parte difícil no es dibujar las piezas sino coordinar el tiempo: cada intercambio es una cadena de animaciones y cálculos que debe terminar antes de aceptar otro toque, y resolverlo con <code>async/await</code> y una bandera de «ocupado» me ayudó a entender el ciclo de eventos. Separar el motor en funciones puras permitió probarlo sin dispositivo y cambiar la temática sin tocar la lógica. También aprendí que la fase de pruebas en un dispositivo real incluye problemas ajenos al código, como la autorización de <code>adb</code>. Para mi formación como ingeniero en cibernética, la propuesta de validar la partida en el servidor refuerza una idea que sirve en sistemas de control: no confiar en el dato que reporta un cliente, sino verificarlo.</p>
+<p><b>Conclusión individual de Diego Sastre Villaseñor.</b> Lo que más me dejó fue ver que el diseño visual se puede justificar: definir la paleta y los estilos en un solo archivo hizo que las cuatro pantallas se vieran como una sola aplicación, y elegir los autos por su silueta, color y puntos de potencia permitió que el nivel de poder se entienda sin leer texto y sin depender solo del color. En la navegación entendí la diferencia entre apilar y reemplazar pantallas con <code>push</code> y <code>replace</code>. Las pruebas me enseñaron que avisar al jugador cuando un movimiento no es válido evita que la aplicación parezca descompuesta. Comparar este desarrollo con un motor de videojuegos me dejó claro cuándo conviene cada herramienta.</p>
+
+<h2>Bibliografía</h2>
+<p class="ref">Expo. (s.f.). <i>Introduction to Expo Router</i>. Expo Documentation. Recuperado el 12 de octubre de 2026, de https://docs.expo.dev/router/introduction/</p>
+<p class="ref">Expo. (s.f.). <i>Expo Go</i>. Recuperado el 12 de octubre de 2026, de https://expo.dev/go</p>
+<p class="ref">Google. (s.f.). <i>Android Debug Bridge (adb)</i>. Android Developers. Recuperado el 12 de octubre de 2026, de https://developer.android.com/tools/adb</p>
+<p class="ref">Google. (s.f.). <i>Play Integrity API</i>. Android Developers. Recuperado el 12 de octubre de 2026, de https://developer.android.com/google/play/integrity</p>
+<p class="ref">Krawczyk, H., Bellare, M. y Canetti, R. (1997). <i>HMAC: Keyed-hashing for message authentication</i> (RFC 2104). Internet Engineering Task Force. https://www.rfc-editor.org/rfc/rfc2104</p>
+<p class="ref">Meta Platforms, Inc. (s.f.). <i>Animated</i>. React Native Documentation. Recuperado el 12 de octubre de 2026, de https://reactnative.dev/docs/animated</p>
+<p class="ref">Meta Platforms, Inc. (s.f.). <i>PanResponder</i>. React Native Documentation. Recuperado el 12 de octubre de 2026, de https://reactnative.dev/docs/panresponder</p>
+<p class="ref">Nielsen, J. (2024). <i>10 usability heuristics for user interface design</i>. Nielsen Norman Group. Recuperado el 12 de octubre de 2026, de https://www.nngroup.com/articles/ten-usability-heuristics/</p>
+<p class="ref">Nystrom, R. (2014). <i>Game programming patterns</i>. Genever Benning. https://gameprogrammingpatterns.com/component.html</p>
+<p class="ref">OWASP Foundation. (2023). <i>OWASP API security top 10 – 2023</i>. Recuperado el 12 de octubre de 2026, de https://owasp.org/API-Security/editions/2023/en/0x00-header/</p>
+<p class="ref">Wikipedia. (s.f.). <i>2048 (videojuego)</i>. Recuperado el 12 de octubre de 2026, de https://es.wikipedia.org/wiki/2048_(videojuego)</p>
+<p class="ref">Wikipedia. (s.f.). <i>Motor de videojuego</i>. Recuperado el 12 de octubre de 2026, de https://es.wikipedia.org/wiki/Motor_de_videojuego</p>
+<p class="ref">Wikipedia. (s.f.). <i>Tile-matching video game</i>. Recuperado el 12 de octubre de 2026, de https://en.wikipedia.org/wiki/Tile-matching_video_game</p>
+
+</body>
+</html>
